@@ -18,12 +18,8 @@ body {
 .flex {
   display: flex;
   align-items: center;
+  gap: 10px
 }
-
-.flex>input {
-  margin-right: 10px;
-}
-
 .subsection {
   background-color: var(--subsection);
   padding: 10px;
@@ -44,8 +40,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding: 0px 20px;
 }
 
 input[type="checkbox"] {
@@ -78,6 +73,7 @@ input[type="checkbox"]:checked:after {
   background-size: contain;
 }
 
+
 .center {
   display: flex;
   align-items: center;
@@ -85,17 +81,20 @@ input[type="checkbox"]:checked:after {
 }
 
 select,
-button {
+button, input:not([type=checkbox]) {
   border-radius: 8px;
   color: var(--color);
   background-color: var(--subsection);
-  height: 30px;
+  padding: 10px;
   width: 100%;
   width: -moz-available;
   width: -webkit-fill-available;
   transition: filter 0.15s ease-in-out;
   border: 1px solid var(--color);
   font-family: 'Work Sans', sans-serif;
+}
+input:not([type=checkbox]) {
+  background-color: var(--input);
 }
 
 button:hover {

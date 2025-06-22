@@ -1,4 +1,9 @@
 /**
+ * The Manifest V3 API
+ */
+const browserToUse = typeof chrome === "undefined" ? browser : chrome;
+
+/**
  * An array that contains all the pressed keys in lowercase
  */
 let clickedElements = [];
@@ -118,7 +123,15 @@ let needsToBeApplied = {
     /**
      * Calls `e.preventDefault()` when the user presses a key on the webpage.
      */
-    preventDefaultEvents: false
+    preventDefaultEvents: false,
+    /**
+     * On YouTube Mobile, where the icon should be located (CSS value: top)
+     */
+    topPosition: "5px",
+    /**
+     * On YouTube Mobile, where the icon should be located (CSS value: left)
+     */
+    leftPosition: "10px"
 };
 /**
  * Checks if the provided selector (and its hover element) exists, and, if true, removes it from the DOM.
@@ -177,6 +190,7 @@ let buttons = {
         return div;
     })()
 }
+
 function main() {
     /**
      * Read the value of the local storage for extension.
@@ -187,12 +201,16 @@ function main() {
         needsToBeApplied.keepHeight = isNaN(+val.HeightFill) ? 0 : +val.HeightFill;
         needsToBeApplied.toggleExtension = val.ToggleExtensionCmd ?? [];
         needsToBeApplied.preventDefaultEvents = val.PreventDefault === "1";
+        needsToBeApplied.topPosition = val.TopPosition ?? "5px";
+        needsToBeApplied.leftPosition = val.LeftPosition ?? "10px";
+        buttons.mobileFix.style.top = needsToBeApplied.topPosition;
+        buttons.mobileFix.style.left = needsToBeApplied.leftPosition;
     }
     /**
      * Get settings from the local storage for extension
      */
     function reSyncSettings() {
-        typeof chrome !== "undefined" ? chrome.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault"], (val) => readLocalVal(val)) : browser.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault"], (val) => readLocalVal(val));
+        browserToUse.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault", "TopPosition", "LeftPosition"]).then((val) => readLocalVal(val));
     }
     reSyncSettings();
     let observer = new MutationObserver(() => { // Observe for mutations in the classes of the "movie_player" div. When full screen, this item obtains the "ytp-fullscreen" class.
@@ -244,14 +262,14 @@ function main() {
     try { // We'll remove the event listeners, so that we avoid having the same function triggered multiple times when changing video from a playlist.
         window.removeEventListener("keydown", eventsContainer.keydown);
         window.removeEventListener("keyup", eventsContainer.keyup);
-        (typeof chrome === "undefined" ? browser : chrome).runtime.onMessage.removeListener(eventsContainer.onMessage);
+        browserToUse.runtime.onMessage.removeListener(eventsContainer.onMessage);
     } catch (ex) {
         // Nothing
     }
 
     window.addEventListener("keydown", eventsContainer.keydown);
     window.addEventListener("keyup", eventsContainer.keyup);
-    (typeof chrome === "undefined" ? browser : chrome).runtime.onMessage.addListener(eventsContainer.onMessage);
+    browserToUse.runtime.onMessage.addListener(eventsContainer.onMessage);
 }
 function mainCheck() {
     ((document.querySelector(".html5-video-player") ?? "") !== "") ? main() : setTimeout(() => { mainCheck() }, 500);

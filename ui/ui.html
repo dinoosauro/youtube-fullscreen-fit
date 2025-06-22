@@ -10,8 +10,8 @@
 <body>
     <div class="title">
         <div>
-            <img style="width: 100%; max-height: 80px;" src="./assets/icon.svg">
-            <h1 style="text-align: center; margin-top: 5px;">YouTube Fullscreen Fit</h1>
+            <img style="width: fit-content; max-height: 80px;" src="./assets/icon.svg">
+            <h1 style="text-align: center; margin: 0px; margin-left: 10px">YouTube Fullscreen Fit</h1>
         </div>
     </div>
     <div class="subsection" id="requireAccess" style="background-color: var(--accent);">
@@ -48,10 +48,37 @@
             extension. Releasing one key finalizes the selection.</p>
         <div class="subsection" style="background-color: var(--input); padding: 10px;" id="toggleShortcut">
         </div><br>
-        <div class="flex">
+        <label class="flex">
             <input type="checkbox" id="preventDefault"><label for="preventDefault">Prevent browser
                 default shortcuts</label>
-        </div>
+        </label><br>
+        <button id="deleteShortcut" style="background-color: var(--input);">Delete shortcut</button>
+    </div><br>
+    <div class="subsection">
+        <h3>Custom icon position</h3>
+        <p>On YouTube Mobile, the icon is usually displayed at the top-left corner. If this interferes with other
+            extension, you can change the position here.<br>
+            <strong>Note:</strong> you must use CSS values there, for example:
+        <ul>
+            <li>If you want to put the icon at the top, write something like <code>10px</code> in the "Top" textbox</li>
+            <li>If you want to put the icon at the bottom, write something like <code>calc(100vh - 40px - 10px)</code>
+                in the "Top" textbox</li>
+            <li>If you want to put the icon at the left, write something like <code>10px</code> in the "Left" textbox
+            </li>
+            <li>If you want to put the icon at the right, write something like <code>calc(100vw - 40px - 10px)</code> in
+                the "Left" textbox</li>
+        </ul><br>
+        <strong>Note:</strong> the icon background is a square of 40px. So, when you use calc(), remember to subtract at
+        least 40 pixels so that it can be shown!</p><br>
+        <label class="flex">
+            Left: <input type="text" id="leftPosition" value="10px">
+        </label><br>
+        <label class="flex">
+            Top: <input type="text" id="topPosition" value="5px">
+        </label>
+        <label class="flex">
+
+        </label>
     </div><br>
     <div class="subsection">
         <h3>Code:</h3>

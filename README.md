@@ -22,5 +22,7 @@ If you want to enable manually the zoom, you can do that by clicking on the exte
 
 You can also choose to automatically scale the video only if the screen height isn't completely covered (the option is: `Adapt content to the screen only if the video height doesn't completely cover the screen`). This means that the video will be filled only if there are black bars at the top/bottom of the screen. It might be useful to enable this if you listen to music using YouTube's auto generated videos. You can do the same thing also for the opposite case.
 
+On YouTube mobile, the icon to enable/disable the extension is put in the top-left of the page, and it's visible only when the video progress bar is shown. You can change the position by providing a valid CSS value.
+
 ![UI Screenshot](./img/ytplaylistfit-ui.jpg)
 
