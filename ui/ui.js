@@ -57,16 +57,6 @@ for (let item in check) {
     browserToUse.storage.sync.get([check[item]]).then((res) => { if ((res[check[item]] ?? "") !== "") document.getElementById(item).checked = res[check[item]] === "1" }); // Get the value of that item and update the DOM
 }
 
-let textboxItems = { // Same as before, but here we'll save the textbox value instead of the checkbox's checked property.
-    "leftPosition": "LeftPosition",
-    "topPosition": "TopPosition"
-}
-
-for (let item in textboxItems) {
-    document.getElementById(item).onchange = () => setItem(textboxItems[item], document.getElementById(item).value);
-    browserToUse.storage.sync.get([textboxItems[item]]).then((res) => { if ((res[textboxItems[item]] ?? "") !== "") document.getElementById(item).value = res[textboxItems[item]] }); // Get the value of that item and update the DOM
-}
-
 
 function setItem(key, value) {
     browserToUse.storage.sync.set({ [key]: value });
