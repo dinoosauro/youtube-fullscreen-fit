@@ -9,52 +9,6 @@ const browserToUse = typeof chrome === "undefined" ? browser : chrome;
 let clickedElements = [];
 
 /**
- * An Object that contains some functions that are called from event listeners
- */
-const eventsContainer = {
-    /**
-     * Add the key to the array and check if it's valid
-     * The event that should be triggered for the "keydown" keyboard event
-     * @param {KeyboardEvent} e 
-     */
-    keydown: (e) => {
-        needsToBeApplied.preventDefaultEvents && e.preventDefault();
-        clickedElements.push(e.key.toLowerCase());
-        if (!document.fullscreenElement) return;
-        needsToBeApplied.toggleExtension.length > 0 && needsToBeApplied.toggleExtension.every(key => clickedElements.indexOf(key) !== -1) && document.querySelector("[data-ytfullscreenfitresize], [data-ytfullscreenfitexit]").click();
-    },
-    /**
-     * Delete everything
-     * The event that should be triggered for the "keyup" keyboard event
-     * @param {KeyboardEvent} e 
-     */
-    keyup: (e) => {
-        clickedElements = [];
-    },
-    /**
-     * Receive a message from the extension UI
-     * @param {any} message the Object received from the UI, composed by {content: any, action: string}
-     */
-    onMessage: (message) => {
-        switch (message.action) {
-            case "updateKeyboardShortcut": // Update keyboard shortcut to toggle the extension
-                needsToBeApplied.toggleExtension = message.content;
-                break;
-        }
-
-    }
-}
-
-/**
- * The array that contains all the MutationObserver that are currently running
- */
-let observerArr = [];
-/**
- * The array that contains all the intervals that are currently running
- */
-
-let intervalArr = [];
-/**
  * Create the button for the YouTube video player
  */
 function btnCreate({ attr, img, hover }) {
@@ -140,15 +94,48 @@ function removeItem(selector) {
     if ((document.querySelector(`[${selector}hover]`) ?? "") !== "") document.querySelector(`[${selector}hover]`).remove();
 }
 /**
+ * Format the video player so that the cover effect can be applied.
+ */
+function fixVideoPlayerWidth() {
+    let element = document.querySelector(".html5-video-container").querySelector("video"); // Get the video element
+    if ((element.style.width !== "100vw" || element.style.height !== "100vh" || element.style.objectFit !== needsToBeApplied.fillStyle || element.style.top !== "0px" || element.style.left !== "0px") && document.fullscreenElement) {
+        element.style.width = "100vw";
+        element.style.height = "100vh";
+        element.style.objectFit = needsToBeApplied.fillStyle; // Apply the objectFit style, so that the content is filled
+        ["top", "left"].forEach(e => { element.style[e] = "0px" }); // Put it on the top of the page
+    }
+}
+/**
+ * The MutationObserver that checks the video player's width/height, and automatically updates it so that the content can fit.
+ */
+let prevMutationObserver = new MutationObserver(() => fixVideoPlayerWidth());
+/**
+ * Check that the resize/exit icon is still in the DOM, and, if not, simulate a new fullscreen event to add it.
+ * This is useful on mobile YouTube, if the user changes the video while being in fullscreen mode.
+ */
+let newMobileVideoObserver = new MutationObserver(() => {
+    if (document.fullscreenElement && !document.querySelector("[data-ytfullscreenfitresize]") && !document.querySelector("[data-ytfullscreenfitexit]")) window.dispatchEvent(new Event("fullscreenchange"));
+})
+/**
  * Update the YouTube video player
  */
 function applyItem() {
     let element = document.querySelector(".html5-video-container").querySelector("video"); // Get the video element
+    if (!element) {
+        setTimeout(() => applyItem(), 50);
+        return;
+    }
+        try { // Disconnect and reconnect
+            prevMutationObserver.disconnect();
+            newMobileVideoObserver.disconnect();
+        } catch (ex) {
+            console.warn(ex);
+        }
+    prevMutationObserver.observe(element, { attributes: true });
+    const controls = document.querySelector(".ytmWatchPlayerControlsHost");
+    !!controls && newMobileVideoObserver.observe(controls, {childList: true});
+    fixVideoPlayerWidth(); // Change video object properties so that it fits.
     removeItem("data-ytfullscreenfitresize");
-    element.style.height = `100vh`;  // The player must fill the screen
-    element.style.width = `100vw`; // The player must fill the screen
-    element.style.objectFit = needsToBeApplied.fillStyle; // Apply the objectFit style, so that the content is filled
-    ["top", "left"].forEach(e => { element.style[e] = "0px" }); // Put it on the top of the page
     !document.querySelector("[data-ytfullscreenfitexit]") && (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.exit); // If no "exit" button is on the DOM, add one, so that the user can return to the classic video view.
     !document.querySelector(".ytp-right-controls") && document.querySelector(".player-controls-top.with-video-details").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
 }
@@ -175,6 +162,7 @@ let buttons = {
         clickImg.onclick = () => {
             needsToBeApplied.force = false; // Avoid restoring the video as filled
             needsToBeApplied.default = false; // Avoid restoring the video as filled
+            prevMutationObserver.disconnect(); // Avoid restoring the video as filled. Note that here we don't disconnect the "newMobileVideoObserver" since the video should still be in fullscreen, so it's important that, if the user changes the video, the icon is still created.
             document.querySelector(".html5-video-container").querySelector("video").style.objectFit = "contain"; // Go back to having the video contained entirely in the page (so with borders)
             removeItem("data-ytfullscreenfitexit"); // Remove this button
             !document.querySelector("[data-ytfullscreenfitresize]") && (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.resize); // And put the resize button
@@ -191,84 +179,56 @@ let buttons = {
     })()
 }
 
-function main() {
-    /**
-     * Read the value of the local storage for extension.
-     */
-    function readLocalVal(val) {
-        needsToBeApplied.default = val.AutoApply !== "0";
-        needsToBeApplied.fillStyle = val.IsStretched !== "0" ? "cover" : "fill";
-        needsToBeApplied.keepHeight = isNaN(+val.HeightFill) ? 0 : +val.HeightFill;
-        needsToBeApplied.toggleExtension = val.ToggleExtensionCmd ?? [];
-        needsToBeApplied.preventDefaultEvents = val.PreventDefault === "1";
-    }
-    /**
-     * Get settings from the local storage for extension
-     */
-    function reSyncSettings() {
-        browserToUse.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault"]).then((val) => readLocalVal(val));
-    }
-    reSyncSettings();
-    let observer = new MutationObserver(() => { // Observe for mutations in the classes of the "movie_player" div. When full screen, this item obtains the "ytp-fullscreen" class.
-        if (document.getElementById("movie_player").classList.contains("ytp-fullscreen")) { // Fullscreen
-            if ((needsToBeApplied.default &&
-                (needsToBeApplied.keepHeight === 0
-                    || (needsToBeApplied.keepHeight === 1 && (document.querySelector(".html5-video-container").querySelector("video").videoWidth / document.querySelector(".html5-video-container").querySelector("video").videoHeight) > (window.innerWidth / window.innerHeight))
-                    || (needsToBeApplied.keepHeight === 2 && (document.querySelector(".html5-video-container").querySelector("video").videoWidth / document.querySelector(".html5-video-container").querySelector("video").videoHeight) < (window.innerWidth / window.innerHeight))
-                )) || needsToBeApplied.force) applyItem(); else if (!document.querySelector("[data-ytfullscreenfitresize]")) {
-                    (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.resize); // If it needs to be applied, do it. Otherwise, show the button to enlarge the video.
-                    !document.querySelector(".ytp-right-controls") && document.querySelector(".player-controls-top.with-video-details").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
-                }
-        } else { // Probably not fullscreen
-            if ((document.fullscreenElement ?? "") === "") { // No fullscreen element found
-                needsToBeApplied.force = false; // Avoid filling the video again
-                reSyncSettings(); // And get previous settings
-            }
-            for (let item of ["data-ytfullscreenfitresize", "data-ytfullscreenfitexit"]) removeItem(item); // Remove the buttons
-        }
-    })
-    observerArr.push(observer);
-    function startMoviePlayer() {
-        ((document.getElementById("movie_player") ?? "") === "") ? setTimeout(() => { startMoviePlayer(); }, 50) : observer.observe(document.getElementById("movie_player"), { attributes: true }) // Start observing the movie_player if the "movie_player" element has appeared
-    }
-    intervalArr.push(setInterval(() => {
-        ((document.getElementById("movie_player") ?? "") !== "" && document.getElementById("movie_player").classList.contains("ytp-fullscreen") && (document.querySelector("[data-ytfullscreenresizegeneral]") ?? "") === "") && startMoviePlayer();
-    }, 500));
-    startMoviePlayer(); // Wait until the movie_player id is found
-
-    // Now, we'll set up keyboard listeners, to make sure that the toggle shortcut can work.
-
-    try { // We'll remove the event listeners, so that we avoid having the same function triggered multiple times when changing video from a playlist.
-        window.removeEventListener("keydown", eventsContainer.keydown);
-        window.removeEventListener("keyup", eventsContainer.keyup);
-        browserToUse.runtime.onMessage.removeListener(eventsContainer.onMessage);
-    } catch (ex) {
-        // Nothing
-    }
-
-    window.addEventListener("keydown", eventsContainer.keydown);
-    window.addEventListener("keyup", eventsContainer.keyup);
-    browserToUse.runtime.onMessage.addListener(eventsContainer.onMessage);
+/**
+ * Read the value of the local storage for extension.
+ */
+function readLocalVal(val) {
+    needsToBeApplied.default = val.AutoApply !== "0";
+    needsToBeApplied.fillStyle = val.IsStretched !== "0" ? "cover" : "fill";
+    needsToBeApplied.keepHeight = isNaN(+val.HeightFill) ? 0 : +val.HeightFill;
+    needsToBeApplied.toggleExtension = val.ToggleExtensionCmd ?? [];
+    needsToBeApplied.preventDefaultEvents = val.PreventDefault === "1";
 }
-function mainCheck() {
-    ((document.querySelector(".html5-video-player") ?? "") !== "") ? main() : setTimeout(() => { mainCheck() }, 50);
+/**
+ * Get settings from the local storage for extension
+ */
+function reSyncSettings() {
+    browserToUse.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault"]).then((val) => readLocalVal(val));
 }
-mainCheck();
-let oldWeb = window.location.href; // Store the first URL
-setInterval(() => { // Check if the URL has changed
-    if (oldWeb !== window.location.href) {// Disconnect every observer, remove every button and recreate all the events
-        for (let item of observerArr) {
-            try {
-                item.disconnect();
-            } catch (ex) {
-                console.warn(ex);
-            }
-        }
-        for (let item of intervalArr) clearTimeout(item);
-        buttons.mobileFix.style.display = "none";
-        for (let item of ["data-ytfullscreenfitresize", "data-ytfullscreenfitexit", "data-ytfullscreenresizegeneral"]) removeItem(item);
-        oldWeb = window.location.href;
-        mainCheck();
-    }
-}, 450)
+reSyncSettings();
 
+// Handle keyboard shortcuts
+
+window.addEventListener("keydown", (e) => { // Add the key to the array and check if it's valid
+    needsToBeApplied.preventDefaultEvents && e.preventDefault();
+    clickedElements.push(e.key.toLowerCase());
+    if (!document.fullscreenElement) return;
+    needsToBeApplied.toggleExtension.length > 0 && needsToBeApplied.toggleExtension.every(key => clickedElements.indexOf(key) !== -1) && document.querySelector("[data-ytfullscreenfitresize], [data-ytfullscreenfitexit]").click();
+});
+window.addEventListener("keyup", (e) => { clickedElements = [] }); // Delete all the pressed keys
+browserToUse.runtime.onMessage.addListener((message) => { // Receive messages from the extension
+    switch (message.action) {
+        case "updateKeyboardShortcut": // Update keyboard shortcut to toggle the extension
+            needsToBeApplied.toggleExtension = message.content;
+            break;
+    }
+
+});
+window.addEventListener("fullscreenchange", (e) => {
+    if (document.fullscreenElement) {
+        if ((needsToBeApplied.default &&
+            (needsToBeApplied.keepHeight === 0
+                || (needsToBeApplied.keepHeight === 1 && (document.querySelector(".html5-video-container").querySelector("video").videoWidth / document.querySelector(".html5-video-container").querySelector("video").videoHeight) > (window.innerWidth / window.innerHeight))
+                || (needsToBeApplied.keepHeight === 2 && (document.querySelector(".html5-video-container").querySelector("video").videoWidth / document.querySelector(".html5-video-container").querySelector("video").videoHeight) < (window.innerWidth / window.innerHeight))
+            )) || needsToBeApplied.force) applyItem(); else if (!document.querySelector("[data-ytfullscreenfitresize]")) {
+                (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.resize); // If it needs to be applied, do it. Otherwise, show the button to enlarge the video.
+                !document.querySelector(".ytp-right-controls") && document.querySelector(".player-controls-top.with-video-details").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
+            }
+    } else {
+        needsToBeApplied.force = false; // Avoid filling the video again
+        reSyncSettings(); // And get previous settings
+        for (let item of ["data-ytfullscreenfitresize", "data-ytfullscreenfitexit"]) removeItem(item); // Remove the buttons
+        prevMutationObserver.disconnect();
+        newMobileVideoObserver.disconnect();
+    }
+})

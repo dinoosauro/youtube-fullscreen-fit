@@ -16,13 +16,15 @@ Go to ```about:debugging#/runtime/this-firefox```, and click on the ```Load Temp
 Also available for Firefox here: https://addons.mozilla.org/firefox/addon/youtube-fullscreen-fit/
 
 ## Usage
-After the extension has been installed (and the permission to access YouTube has been granted), videos in full screen mode will automatically be resized to fit all the screen. You'll find a button to make the video back to its original size (or to enlarge it in the opposite case) at the bottom of the player UI (at the left of the subtitle icon).
+After the extension has been installed (and the permission to access YouTube has been granted), videos in full screen mode will automatically be resized to fit all the screen. You'll find a button to make the video back to its original size (or to enlarge it in the opposite case):
+- At the bottom of the player UI (at the left of the subtitle icon) if you're using YouTube on desktop;
+- Or in the top-right corner (at the left of the autoplay icon) if you're using YouTube on mobile.
 
 If you want to enable manually the zoom, you can do that by clicking on the extension icon and by disabling the "Automatically enable extension" checkbox. You can also choose to strecth the video instead of zooming it (idk why you should want to do that, but it's possible).
 
 You can also choose to automatically scale the video only if the screen height isn't completely covered (the option is: `Adapt content to the screen only if the video height doesn't completely cover the screen`). This means that the video will be filled only if there are black bars at the top/bottom of the screen. It might be useful to enable this if you listen to music using YouTube's auto generated videos. You can do the same thing also for the opposite case.
 
-On YouTube mobile, the icon to enable/disable the extension is put in the top-left of the page, and it's visible only when the video progress bar is shown. You can change the position by providing a valid CSS value.
+### UI Screenshot
 
 ![UI Screenshot](./img/ytplaylistfit-ui.jpg)
 
