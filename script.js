@@ -125,15 +125,15 @@ function applyItem() {
         setTimeout(() => applyItem(), 50);
         return;
     }
-        try { // Disconnect and reconnect
-            prevMutationObserver.disconnect();
-            newMobileVideoObserver.disconnect();
-        } catch (ex) {
-            console.warn(ex);
-        }
+    try { // Disconnect and reconnect
+        prevMutationObserver.disconnect();
+        newMobileVideoObserver.disconnect();
+    } catch (ex) {
+        console.warn(ex);
+    }
     prevMutationObserver.observe(element, { attributes: true });
     const controls = document.querySelector(".ytmWatchPlayerControlsHost");
-    !!controls && newMobileVideoObserver.observe(controls, {childList: true});
+    !!controls && newMobileVideoObserver.observe(controls, { childList: true });
     fixVideoPlayerWidth(); // Change video object properties so that it fits.
     removeItem("data-ytfullscreenfitresize");
     !document.querySelector("[data-ytfullscreenfitexit]") && (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.exit); // If no "exit" button is on the DOM, add one, so that the user can return to the classic video view.
@@ -211,18 +211,28 @@ browserToUse.runtime.onMessage.addListener((message) => { // Receive messages fr
         case "updateKeyboardShortcut": // Update keyboard shortcut to toggle the extension
             needsToBeApplied.toggleExtension = message.content;
             break;
+        case "updateNeedsToBeApplied":  // The user has changed an option from the settings UI, so we need to update them.
+            reSyncSettings();
+            break;
     }
 
 });
 window.addEventListener("fullscreenchange", (e) => {
     if (document.fullscreenElement) {
+        const videoObj = document.querySelector(".html5-video-container").querySelector("video");
+        const [hasTopBar, hasLeftBar] = [(videoObj.videoWidth / videoObj.videoHeight) > (window.innerWidth / window.innerHeight), (videoObj.videoWidth / videoObj.videoHeight) < (window.innerWidth / window.innerHeight)]; // Check if the video has a bar at the top/bottom or at the left/right
         if ((needsToBeApplied.default &&
             (needsToBeApplied.keepHeight === 0
-                || (needsToBeApplied.keepHeight === 1 && (document.querySelector(".html5-video-container").querySelector("video").videoWidth / document.querySelector(".html5-video-container").querySelector("video").videoHeight) > (window.innerWidth / window.innerHeight))
-                || (needsToBeApplied.keepHeight === 2 && (document.querySelector(".html5-video-container").querySelector("video").videoWidth / document.querySelector(".html5-video-container").querySelector("video").videoHeight) < (window.innerWidth / window.innerHeight))
+                || (needsToBeApplied.keepHeight === 1 && hasTopBar)
+                || (needsToBeApplied.keepHeight === 2 && hasLeftBar)
             )) || needsToBeApplied.force) applyItem(); else if (!document.querySelector("[data-ytfullscreenfitresize]")) {
                 (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.resize); // If it needs to be applied, do it. Otherwise, show the button to enlarge the video.
                 !document.querySelector(".ytp-right-controls") && document.querySelector(".player-controls-top.with-video-details").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
+            } 
+            if (!needsToBeApplied.force && videoObj.style.objectFit === "cover" && ((needsToBeApplied.keepHeight === 1 && !hasTopBar) || (needsToBeApplied.keepHeight === 2 && !hasLeftBar))) { // Previously, the video was resized since it had a top/left bar. But now it hasn't, so we need to make it normal.
+                const prevDefault = needsToBeApplied.default;
+                buttons.exit.click();
+                needsToBeApplied.default = prevDefault; // This is important since otherwise the video won't be filled in any case if the user closes and opens again the fullscreen mode.
             }
     } else {
         needsToBeApplied.force = false; // Avoid filling the video again
@@ -231,4 +241,16 @@ window.addEventListener("fullscreenchange", (e) => {
         prevMutationObserver.disconnect();
         newMobileVideoObserver.disconnect();
     }
-})
+});
+/**
+ * The first width/height proportion of the page, so that, if the webpage is resized (ex: the user is going in fullscreen mode on mobile), the video can be adapted.
+ */
+let originalWidthHeightProportion = window.innerWidth / window.innerHeight;
+
+window.addEventListener("resize", () => {
+    const newWidthHeightProportion = window.innerWidth / window.innerHeight; 
+    if (originalWidthHeightProportion !== newWidthHeightProportion) { // Check that the width/height proportion has actually changed. In this case, we'll run again the script. This permits to make the "keepHeight" option useful on mobile, since, when the user enters in fullscreen mode, the window stil hasn't been resized.
+        originalWidthHeightProportion = newWidthHeightProportion;
+        document.fullscreenElement && window.dispatchEvent(new Event("fullscreenchange"));
+    }
+});

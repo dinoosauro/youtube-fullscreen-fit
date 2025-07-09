@@ -32,9 +32,17 @@ document.getElementById("toggleShortcut").addEventListener("click", () => {
  * Save the new keyboard shortcut for enabling/disabling the extension, and send the new combination to the script.
  */
 async function updateKeyboardShortcut() {
-    setItem("ToggleExtensionCmd", combination); // Save the new combination
-    const ids = await browserToUse.tabs.query({ active: true }); // Send to the content script the new keyboard shortcut
-    browserToUse.tabs.sendMessage(ids[0].id, { action: "updateKeyboardShortcut", content: combination });
+    await setItem("ToggleExtensionCmd", combination); // Save the new combination
+    await sendMessage({ action: "updateKeyboardShortcut", content: combination }); // Ask the main script to update the settings, so that they can be applied the next time the user will put the video in fullscreen mode.
+}
+
+/**
+ * Send a message to the main script
+ * @param {any} obj the object to send to the main script
+ */
+async function sendMessage(obj) {
+    const ids = await browserToUse.tabs.query({ active: true }); 
+    browserToUse.tabs.sendMessage(ids[0].id, obj);
 }
 
 document.getElementById("deleteShortcut").addEventListener("click", () => { // Remove the saved shortcut
@@ -53,18 +61,23 @@ let check = { // Key: checkbox ID, Value: the property to change in the storage
     "preventDefault": "PreventDefault"
 }
 for (let item in check) {
-    document.getElementById(item).onchange = () => setItem(check[item], document.getElementById(item).checked ? "1" : "0"); // If checked, write 1 to the storage. Otherwise, write 0.
+    document.getElementById(item).onchange = async () => {
+        await setItem(check[item], document.getElementById(item).checked ? "1" : "0"); // If checked, write 1 to the storage. Otherwise, write 0.
+        await sendMessage({action: "updateNeedsToBeApplied"});
+    }
     browserToUse.storage.sync.get([check[item]]).then((res) => { if ((res[check[item]] ?? "") !== "") document.getElementById(item).checked = res[check[item]] === "1" }); // Get the value of that item and update the DOM
 }
 
-
-function setItem(key, value) {
-    browserToUse.storage.sync.set({ [key]: value });
+async function setItem(key, value) {
+    await browserToUse.storage.sync.set({ [key]: value });
 }
-document.getElementById("fillHeight").onchange = () => {
-    setItem("HeightFill", document.getElementById("fillHeight").value);
+
+document.getElementById("fillHeight").onchange = async () => {
+    await setItem("HeightFill", document.getElementById("fillHeight").value);
+    await sendMessage({action: "updateNeedsToBeApplied"});
     updateFillHeightDesc();
 };
+
 function updateFillHeightDesc() {
     switch (document.getElementById("fillHeight").value) {
         case "0":
@@ -80,6 +93,7 @@ function updateFillHeightDesc() {
             document.getElementById("fillHeightMeaning").style.display = "block";
             break;
     }
+    
 }
 browserToUse.storage.sync.get(["HeightFill"]).then((res) => { document.getElementById("fillHeight").value = res["HeightFill"] ?? "0"; updateFillHeightDesc() });
 
@@ -93,3 +107,4 @@ function checkPermission() { // Check if the user has granted permission to the 
     }
 }
 checkPermission();
+document.getElementById("version").textContent = browserToUse.runtime.getManifest().version;
