@@ -137,7 +137,7 @@ function applyItem() {
     fixVideoPlayerWidth(); // Change video object properties so that it fits.
     removeItem("data-ytfullscreenfitresize");
     !document.querySelector("[data-ytfullscreenfitexit]") && (document.querySelector(".ytp-right-controls") ?? buttons.mobileFix).prepend(buttons.exit); // If no "exit" button is on the DOM, add one, so that the user can return to the classic video view.
-    !document.querySelector(".ytp-right-controls") && document.querySelector(".player-controls-top.with-video-details").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
+    !document.querySelector(".ytp-right-controls") && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
 }
 /**
  * The object that'll contain the buttons to adapt the video to screen size (or go back to normal view)
