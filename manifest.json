@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "YouTube Fullscreen Fit",
-  "description": "Make the YouTube player fit all of your screen when opening fullscreen mode",
-  "version": "1.7.3",
+  "description": "Make the YouTube and Invidious player fit all of your screen when opening fullscreen mode",
+  "version": "1.8",
   "action": {
     "default_popup": "./ui/ui.html"
   },
@@ -15,7 +15,11 @@
         "script.js"
       ],
       "matches": [
-        "https://*.youtube.com/*"
+        "https://*.youtube.com/*",
+        "https://inv.nadeko.net/*",
+        "https://yewtu.be/*",
+        "https://invidious.nerdvpn.de/*",
+        "https://invidious.f5.si/*"
       ]
     }
   ],

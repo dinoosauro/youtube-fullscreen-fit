@@ -1,5 +1,5 @@
 # youtube-fullscreen-fit
-Make the YouTube player fill all of your screen while viewing a video in fullscreen mode.
+Make the YouTube and Invidious player fill all of your screen while viewing a video in fullscreen mode.
 
 https://github.com/user-attachments/assets/7b901f51-336a-49fe-95bb-4eb1356555a0
 
