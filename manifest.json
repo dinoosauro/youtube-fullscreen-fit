@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YouTube Fullscreen Fit",
   "description": "Make the YouTube and Invidious player fit all of your screen when opening fullscreen mode",
-  "version": "1.8",
+  "version": "1.8.1",
   "action": {
     "default_popup": "./ui/ui.html"
   },

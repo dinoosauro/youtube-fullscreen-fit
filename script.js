@@ -274,7 +274,7 @@ window.addEventListener("fullscreenchange", (e) => {
                 addResizeButton() // If it needs to be applied, do it. Otherwise, show the button to enlarge the video.
                 !getQuerySelector("controls-right") && window.location.hostname.endsWith("youtube.com") && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
             } 
-            if (!needsToBeApplied.force && videoObj.style.objectFit === "cover" && ((needsToBeApplied.keepHeight === 1 && !hasTopBar) || (needsToBeApplied.keepHeight === 2 && !hasLeftBar))) { // Previously, the video was resized since it had a top/left bar. But now it hasn't, so we need to make it normal.
+            if (!needsToBeApplied.force && (videoObj.style.objectFit === "cover" || videoObj.style.objectFit === "fill") && ((needsToBeApplied.keepHeight === 1 && !hasTopBar) || (needsToBeApplied.keepHeight === 2 && !hasLeftBar))) { // Previously, the video was resized since it had a top/left bar. But now it hasn't, so we need to make it normal.
                 const prevDefault = needsToBeApplied.default;
                 buttons.exit.click();
                 needsToBeApplied.default = prevDefault; // This is important since otherwise the video won't be filled in any case if the user closes and opens again the fullscreen mode.

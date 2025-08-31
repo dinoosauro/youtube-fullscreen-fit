@@ -98,10 +98,10 @@ function updateFillHeightDesc() {
 browserToUse.storage.sync.get(["HeightFill"]).then((res) => { document.getElementById("fillHeight").value = res["HeightFill"] ?? "0"; updateFillHeightDesc() });
 
 document.getElementById("grantAccess").onclick = () => { // Request the access to the YouTube webpage
-    browserToUse.permissions.request({ origins: [getOriginToRequest()] }).then(() => checkPermission());
+    browserToUse.permissions.request({ origins: getOriginToRequest() }).then(() => checkPermission());
 }
 function checkPermission() { // Check if the user has granted permission to the extension to access the YouTube webpage, so that, if false, a warning on the extension UI will be shown.
-    browserToUse.permissions.contains({ origins: [getOriginToRequest()] }).then((permission) => permissionStep2(permission));
+    browserToUse.permissions.contains({ origins: getOriginToRequest() }).then((permission) => permissionStep2(permission));
     function permissionStep2(permission) {
         document.getElementById("requireAccess").style.display = permission ? "none" : "block";
     }
