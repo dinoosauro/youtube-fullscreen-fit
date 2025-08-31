@@ -8,6 +8,11 @@ const browserToUse = typeof chrome === "undefined" ? browser : chrome;
  */
 let clickedElements = [];
 
+function getHostname() {
+    if (window.location.hostname.endsWith("youtube.com") || window.location.hostname.endsWith("youtube.googleapis.com")) return "youtube";
+    return "invidious";
+}
+
 /**
  * Get the equivalent items to the provided `type` for the current YouTube/Invidious instance.
  * @param {"video" | "controls-right"} type the item to get
@@ -16,9 +21,9 @@ let clickedElements = [];
 function getQuerySelector(type) {
     switch(type) {
         case "video":
-            return window.location.hostname.endsWith("youtube.com") ? document.querySelector(".html5-video-container video") : document.getElementById("player_html5_api");
+            return getHostname() === "youtube" ? document.querySelector(".html5-video-container video") : document.getElementById("player_html5_api");
         case "controls-right":
-            return window.location.hostname.endsWith("youtube.com") ? document.querySelector(".ytp-right-controls") : document.querySelector(".vjs-playback-rate")?.closest(".vjs-control-bar");
+            return getHostname() === "youtube" ? document.querySelector(".ytp-right-controls") : document.querySelector(".vjs-playback-rate")?.closest(".vjs-control-bar");
     }
     return null;
 }
@@ -37,11 +42,11 @@ function btnCreate({ attr, img, hover }) {
     clickImg.setAttribute("data-ytfullscreenfit", attr);
     clickImg.classList.add("ytp-button");
     clickImg.src = `data:image/svg+xml;charset=utf-8,${img.replace(/#/g, "%23")}`;
-    if (!window.location.hostname.endsWith("youtube.com")) clickImg.style.order = "2";
+    if (getHostname() !== "youtube") clickImg.style.order = "2";
     // First hover container
     const hoverElement = document.createElement("div");
     hoverElement.classList.add("ytp-tooltip", "ytp-rounded-tooltip", "ytp-bottom");
-    if (!window.location.hostname.endsWith("youtube.com")) hoverElement.style.backgroundColor = "#0000009a";
+    if (getHostname() !== "youtube") hoverElement.style.backgroundColor = "#0000009a";
     hoverElement[attr] = hoverElement;
     // Second hover container
     const hoverContainer = document.createElement("div");
@@ -50,7 +55,7 @@ function btnCreate({ attr, img, hover }) {
     const hoverText = document.createElement("span");
     hoverText.classList.add("ytp-tooltip-text");
     hoverText.textContent = hover;
-    hoverText.style.fontSize = window.location.hostname.endsWith("youtube.com") ? "1.8rem" : "1rem";
+    hoverText.style.fontSize = getHostname() === "youtube" ? "1.8rem" : "1rem";
     /**
      * Try to get YouTube's text color. Fallbacks to "red" if nothing is found.
      */
@@ -167,11 +172,11 @@ function applyItem() {
     }
     prevMutationObserver.observe(element, { attributes: true });
     const controls = document.querySelector(".ytmWatchPlayerControlsHost");
-    !!controls && window.location.hostname.endsWith("youtube.com") && newMobileVideoObserver.observe(controls, { childList: true });
+    !!controls && getHostname() === "youtube" && newMobileVideoObserver.observe(controls, { childList: true });
     fixVideoPlayerWidth(); // Change video object properties so that it fits.
     removeItem("resize");
     !document.querySelector("[data-ytfullscreenfit=exit]") && addResizeButton(true); // If no "exit" button is on the DOM, add one, so that the user can return to the classic video view.
-    !getQuerySelector("controls-right") && window.location.hostname.endsWith("youtube.com") && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
+    !getQuerySelector("controls-right") && getHostname() === "youtube" && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
 }
 /**
  * The object that'll contain the buttons to adapt the video to screen size (or go back to normal view)
@@ -200,7 +205,7 @@ let buttons = {
             applyPreviousStyling(); // Go back to having the video contained entirely in the page (so with borders)
             removeItem("exit"); // Remove this button
             !document.querySelector("[data-ytfullscreenfit=resize]") && addResizeButton(); // And put the resize button
-            !getQuerySelector("controls-right") && window.location.hostname.endsWith("youtube.com") && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
+            !getQuerySelector("controls-right") && getHostname() === "youtube" && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
             
         };
         return clickImg;
@@ -218,10 +223,9 @@ let buttons = {
  * @param {boolean} addExitBtn if the Exit button shouu
  */
 function addResizeButton(addExitBtn) {
-    console.log("Adding resize button...");
     const btnToAdd = addExitBtn ? buttons.exit : buttons.resize;
     const node = getQuerySelector("controls-right") ?? buttons.mobileFix;
-    window.location.hostname.endsWith("youtube.com") ? node.prepend(btnToAdd) : node.insertBefore(btnToAdd, document.querySelector(".vjs-captions-button, .vjs-quality-selector, .vjs-playback-rate"));
+    getHostname() === "youtube" ? node.prepend(btnToAdd) : node.insertBefore(btnToAdd, document.querySelector(".vjs-captions-button, .vjs-quality-selector, .vjs-playback-rate"));
 }
 
 /**
@@ -272,7 +276,7 @@ window.addEventListener("fullscreenchange", (e) => {
                 || (needsToBeApplied.keepHeight === 2 && hasLeftBar)
             )) || needsToBeApplied.force) applyItem(); else if (!document.querySelector("[data-ytfullscreenfit=resize]")) {
                 addResizeButton() // If it needs to be applied, do it. Otherwise, show the button to enlarge the video.
-                !getQuerySelector("controls-right") && window.location.hostname.endsWith("youtube.com") && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
+                !getQuerySelector("controls-right") && getHostname() === "youtube" && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
             } 
             if (!needsToBeApplied.force && (videoObj.style.objectFit === "cover" || videoObj.style.objectFit === "fill") && ((needsToBeApplied.keepHeight === 1 && !hasTopBar) || (needsToBeApplied.keepHeight === 2 && !hasLeftBar))) { // Previously, the video was resized since it had a top/left bar. But now it hasn't, so we need to make it normal.
                 const prevDefault = needsToBeApplied.default;
@@ -293,7 +297,7 @@ window.addEventListener("fullscreenchange", (e) => {
  */
 function applyPreviousStyling() {
     const video = getQuerySelector("video");
-    if (window.location.hostname.endsWith("youtube.com")) {
+    if (getHostname() === "youtube") {
         video.style.objectFit = "contain";
         return;
     }

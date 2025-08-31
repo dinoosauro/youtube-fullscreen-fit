@@ -111,7 +111,7 @@ function checkPermission() { // Check if the user has granted permission to the 
  * TODO: look to the webpage URL and ask only that hostname.
  */
 function getOriginToRequest() {
-    return ["https://inv.nadeko.net/*", "https://yewtu.be/*", "https://invidious.nerdvpn.de/*", "https://invidious.f5.si/*", "https://*.youtube.com/"];
+    return ["https://inv.nadeko.net/*", "https://yewtu.be/*", "https://invidious.nerdvpn.de/*", "https://invidious.f5.si/*", "https://*.youtube.com/", "https://youtube.googleapis.com/embed/*", "https://*.youtube-nocookie.com/embed/*"];
 }
 checkPermission();
 document.getElementById("version").textContent = browserToUse.runtime.getManifest().version;
