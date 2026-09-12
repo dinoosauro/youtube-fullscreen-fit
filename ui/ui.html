@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <div class="title">
+    <div class="title" style="margin: 15px;">
         <div>
             <img style="width: fit-content; max-height: 80px;" src="./assets/icon.svg">
             <h1 style="text-align: center; margin: 0px; margin-left: 10px">YouTube Fullscreen Fit</h1>
@@ -24,6 +24,9 @@
         <div class="flex">
             <input type="checkbox" id="autoCover" checked checked><label for="autoCover">Automatically enable
                 extension</label>
+        </div><br>
+        <div class="flex">
+            <input type="checkbox" id="keepPrevious"><label for="keepPrevious">Don't adapt the content if the user has previously disabled the extension in the same webpage</label>
         </div><br>
         <div class="flex">
             <input type="checkbox" id="stretch" checked checked><label for="stretch">Adapt content to the

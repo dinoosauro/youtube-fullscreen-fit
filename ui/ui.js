@@ -58,7 +58,8 @@ browserToUse.storage.sync.get(["ToggleExtensionCmd"]).then((res) => { // Update 
 let check = { // Key: checkbox ID, Value: the property to change in the storage
     "autoCover": "AutoApply",
     "stretch": "IsStretched",
-    "preventDefault": "PreventDefault"
+    "preventDefault": "PreventDefault",
+    "keepPrevious": "KeepPreviousChoice"
 }
 for (let item in check) {
     document.getElementById(item).onchange = async () => {

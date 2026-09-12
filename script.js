@@ -112,6 +112,10 @@ let needsToBeApplied = {
      * Calls `e.preventDefault()` when the user presses a key on the webpage.
      */
     preventDefaultEvents: false,
+    /**
+     * If true, the extension won't apply the fullscreen fit logic if the user has manually restored the default video size previously.
+     */
+    keepPreviousSelection: true
 };
 /**
  * Checks if the provided selector (and its hover element) exists, and, if true, removes it from the DOM.
@@ -189,6 +193,7 @@ let buttons = {
         let clickImg = btnCreate({ hover: "Fill the video to screen width and height", img: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-4 -4 32 32"><path fill="#f0f0f0" d="M21.25 13a.75.75 0 0 1 .743.648l.007.102v5a3.25 3.25 0 0 1-3.065 3.245L18.75 22h-4.668c.537-.385.974-.9 1.265-1.499l3.403-.001a1.75 1.75 0 0 0 1.744-1.607l.006-.143v-5a.75.75 0 0 1 .75-.75Zm-9.5-4A3.25 3.25 0 0 1 15 12.25v6.5A3.25 3.25 0 0 1 11.75 22h-6.5A3.25 3.25 0 0 1 2 18.75v-6.5A3.25 3.25 0 0 1 5.25 9h6.5Zm-5.689 4.103a.5.5 0 0 0-.06.24v4.315a.5.5 0 0 0 .739.439l3.955-2.158a.5.5 0 0 0 0-.878L6.74 12.903a.5.5 0 0 0-.679.2ZM18.751 2a3.25 3.25 0 0 1 3.244 3.066L22 5.25v5a.75.75 0 0 1-1.493.102l-.007-.102v-5a1.75 1.75 0 0 0-1.606-1.744L18.75 3.5h-5a.75.75 0 0 1-.102-1.493L13.75 2h5Zm-8.5 0a.75.75 0 0 1 .1 1.493l-.1.007h-5a1.75 1.75 0 0 0-1.745 1.606L3.5 5.25v3.402c-.599.292-1.114.73-1.5 1.266V5.25a3.25 3.25 0 0 1 3.066-3.245L5.25 2h5Z"/></svg>`, attr: "resize" });
         clickImg.onclick = () => { // Force to adapt the video
             needsToBeApplied.force = true;
+            if (needsToBeApplied.keepPreviousSelection) needsToBeApplied.default = true;
             applyItem();
         }
         return clickImg;
@@ -206,7 +211,7 @@ let buttons = {
             removeItem("exit"); // Remove this button
             !document.querySelector("[data-ytfullscreenfit=resize]") && addResizeButton(); // And put the resize button
             !getQuerySelector("controls-right") && getHostname() === "youtube" && document.querySelector(".player-controls-top").prepend(buttons.mobileFix); // The user is using YouTube mobile, so we need to add a div that'll contain the image. This div will be prepended so that it's at the right of the autoplay switch.
-            
+            if (needsToBeApplied.keepPreviousSelection) needsToBeApplied.default = false;
         };
         return clickImg;
     })(),
@@ -232,17 +237,18 @@ function addResizeButton(addExitBtn) {
  * Read the value of the local storage for extension.
  */
 function readLocalVal(val) {
-    needsToBeApplied.default = val.AutoApply !== "0";
+    if (val.KeepPreviousChoice !== "1") needsToBeApplied.default = val.AutoApply !== "0"; // Don't update the default property if the user wants to keep their previous selection
     needsToBeApplied.fillStyle = val.IsStretched !== "0" ? "cover" : "fill";
     needsToBeApplied.keepHeight = isNaN(+val.HeightFill) ? 0 : +val.HeightFill;
     needsToBeApplied.toggleExtension = val.ToggleExtensionCmd ?? [];
     needsToBeApplied.preventDefaultEvents = val.PreventDefault === "1";
+    needsToBeApplied.keepPreviousSelection = val.KeepPreviousChoice === "1";
 }
 /**
  * Get settings from the local storage for extension
  */
 function reSyncSettings() {
-    browserToUse.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault"]).then((val) => readLocalVal(val));
+    browserToUse.storage.sync.get(["AutoApply", "IsStretched", "HeightFill", "ToggleExtensionCmd", "PreventDefault", "KeepPreviousChoice"]).then((val) => readLocalVal(val));
 }
 reSyncSettings();
 
